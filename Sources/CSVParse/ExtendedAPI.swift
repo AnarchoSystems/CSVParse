@@ -40,7 +40,9 @@ public extension CSV {
         CSV(stored: transform(stored))
     }
     
-    
+    mutating func sort<C : Comparable>(by comparable: (S) -> C) {
+        stored.sort(by: comparable)
+    }
     
     func sorted<C : Comparable>(by comparable: (S) -> C) -> CSV {
         map{$0.sorted(by: comparable)}
@@ -50,4 +52,13 @@ public extension CSV {
         map{$0.filter(predicate)}
     }
 
+}
+
+
+extension CSV : ExpressibleByArrayLiteral {
+    
+    public init(arrayLiteral elements: S...) {
+        self.stored = elements
+    }
+    
 }

@@ -2,15 +2,16 @@ import XCTest
 @testable import CSVParse
 
 final class CSVParseTests: XCTestCase {
-    func testExample() {
-        
-        let encoder = CSVEncoder(options: CSVParsingOptions(keySeparator: " - "))
-        let decoder = CSVDecoder()
-        
-        let csv = "a1,a2,a3\n1,2,3\n4,5,6\n7,8,9"
+    
+    let testCSV = "a1,a2,a3\n1,2,3\n4,5,6\n7,8,9"
+    
+    let encoder = CSVEncoder()
+    let decoder = CSVDecoder()
+    
+    func testEncodeDecodeEquality() {
         
         guard let parsed = try? decoder.decode(rowType: FooBarBaz.self,
-                                               from: csv) else {
+                                               from: testCSV) else {
             return XCTFail()
         }
         
@@ -18,10 +19,14 @@ final class CSVParseTests: XCTestCase {
             return XCTFail()
         }
         
-        XCTAssertEqual(csv, string)
+        XCTAssertEqual(testCSV, string)
         
+    }
+        
+    func testFormulaRepresentation() {
+    
         guard let parsed2 = try? decoder.decode(rowType: FooBarBaz.self,
-                                                from: csv)
+                                                from: testCSV)
                 .formula(key: "a2^2", {$0.a2 * $0.a2}) else {
             return XCTFail()
         }
@@ -34,9 +39,40 @@ final class CSVParseTests: XCTestCase {
                        "a1,a2,a3,a2^2\n1,2,3,4\n4,5,6,25\n7,8,9,64")
         
     }
+    
+    func testKeySeparation() {
+        
+        struct Foo : Codable, Equatable {
+            let foo : Bar
+        }
+        struct Bar : Codable, Equatable {
+            let bar : Int
+        }
+        
+        let opts = CSVParsingOptions(keySeparator: " - ")
+        
+        let encoder = CSVEncoder(options: opts)
+        let decoder = CSVDecoder(options: opts)
+        
+        let typed : CSV = [Foo(foo: Bar(bar: 42))]
+        
+        guard let csv = try? encoder.encode(csv: typed) else {
+            return XCTFail()
+        }
+        
+        XCTAssertEqual(csv, "foo - bar\n42")
+        
+        guard let decoded = try? decoder.decode(rowType: Foo.self, from: csv) else {
+            return XCTFail()
+        }
+        
+        XCTAssertEqual(typed, decoded)
+        
+    }
 
     static var allTests = [
-        ("testExample", testExample),
+        ("testEncodeDecodeEquality", testEncodeDecodeEquality),
+        ("testFormulaRepresentation", testFormulaRepresentation),
     ]
 }
 
